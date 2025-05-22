@@ -1,0 +1,165 @@
+# Enhanced Fuzzy RAG Product Feature Assistant
+
+A comprehensive system that combines fuzzy string matching with Retrieval Augmented Generation (RAG) to normalize and interpret noisy user queries about product features, then provide detailed explanations.
+
+## Overview
+
+This system processes natural language queries that may contain typos or non-standard terminology, identifies product features, and provides comprehensive explanations using a language model.
+
+For example, given a query like:
+```
+Looking for a chair with highbak and metl legs
+```
+
+The system will:
+- Correct typos: `highbak` → `HighBack`, `metl legs` → `Metal Legs`
+- Retrieve feature information from a vector database
+- Find similar features that might interest the user: `Lumbar Support`, `Industrial Design`
+- Generate a human-friendly explanation about these features
+
+## System Architecture
+
+The system follows a four-stage pipeline architecture:
+
+### Stage 1: Fuzzy Matching
+- Tokenizes the user query
+- Detects and corrects spelling errors using fuzzy matching
+- Normalizes to canonical feature names from a predefined dictionary
+
+### Stage 2: Vector Retrieval
+- Embeds the corrected query using a vector encoder
+- Retrieves relevant canonical features from a vector DB (Qdrant or FAISS)
+- Retrieves similar features using vector similarity
+
+### Stage 3: LLM Response Generation
+- Constructs a prompt including:
+  - Original query
+  - Corrected query
+  - Canonical feature names
+  - Vector-retrieved feature details
+- Generates a comprehensive explanation using a language model
+
+### Stage 4: User Response
+- Presents the corrected interpretation of the query
+- Highlights identified features and provides detailed explanations
+- Suggests similar features
+
+## Key Components
+
+- **EnhancedProductFeatureAssistant**: Main class that orchestrates the entire pipeline
+- **FuzzyMatcher**: Handles fuzzy matching of product features
+- **VectorRetriever**: Manages vector embeddings and retrieval of feature information
+- **IterativeParser**: Implements a recursive parsing loop to extract all features
+- **LLMResponseGenerator**: Generates natural language explanations using a language model
+- **ResponseFormatter**: Formats the final response for presentation to the user
+- **DictionaryConverter**: Utility to convert between dictionary formats
+
+## Getting Started
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/fuzzy-rag-assistant.git
+cd fuzzy-rag-assistant
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Running the Application
+
+The system includes a sample application that demonstrates its capabilities:
+
+```bash
+# Run in interactive mode with sample data
+python app.py --use-sample
+
+# Process a single query
+python app.py --query "Looking for a chair with highbak and metl legs" --use-sample
+
+# Use a specific LLM provider (if available)
+python app.py --llm-provider ollama --llm-model llama3
+```
+
+### Using Your Own Dictionary Data
+
+You can use your own feature dictionaries by placing JSON files in the `dictionaries` directory:
+
+- `featuresDictionary.json`: Product features
+- `productTypeDictionary.json`: Product types
+- `stylesDictionary.json`: Style descriptions
+
+Each dictionary file should follow this format:
+
+```json
+[
+  {
+    "feature": "HighBack",
+    "description": "Chair back that extends above shoulder height",
+    "spelling_variations": ["highbak", "high back", "tall back"],
+    "synonyms": ["tall backrest", "high backrest"]
+  },
+  ...
+]
+```
+
+If you have dictionaries in a different format, you can use the `DictionaryConverter` to convert them:
+
+```python
+from dictionary_converter import DictionaryConverter
+
+# Convert from old format to new format
+DictionaryConverter.convert_features_dictionary(
+    "old_format.json",
+    "dictionaries/featuresDictionary.json"
+)
+```
+
+## Integration with Existing Implementation
+
+This system is designed to integrate seamlessly with your existing `FuzzyProductSearchParser` implementation. The included `DictionaryConverter` utility helps convert between your current dictionary format and the format used by this system.
+
+## Vector Database Setup
+
+By default, the system uses file-based fallback for vector storage. For production use, we recommend setting up a proper vector database:
+
+### Qdrant
+
+```bash
+# Run Qdrant using Docker
+docker run -p 6333:6333 -p 6334:6334 -v $(pwd)/qdrant_data:/qdrant/storage qdrant/qdrant
+```
+
+### FAISS
+
+FAISS is supported out of the box for in-memory vector storage. For larger datasets, consider setting up a FAISS index server.
+
+## LLM Integration
+
+The system supports multiple LLM providers:
+
+- **Ollama**: For running local open-source models (default)
+- **OpenAI**: For using OpenAI's API (requires API key)
+- **Anthropic**: For using Anthropic's Claude (requires API key)
+- **Mock**: For testing without an LLM
+
+## Extension Points
+
+The system is designed to be extensible:
+
+- Add new LLM providers in `llm_response.py`
+- Integrate with different vector databases in `vector_retrieval.py`
+- Enhance fuzzy matching algorithms in `fuzzy_matching.py`
+- Modify the iterative parsing logic in `iterative_parser.py`
+
+## Requirements
+
+- Python 3.8+
+- sentence-transformers (for vector embeddings)
+- FAISS or Qdrant (for vector storage)
+- LLM provider (Ollama, OpenAI, or Anthropic)
+
+## License
+
+This project is released under the MIT License.
